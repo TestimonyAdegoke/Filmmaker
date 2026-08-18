@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import './showcase.css';
+import './sound-lens.css';
 
 export const metadata: Metadata = {
   title: 'NOIRFRAME — Composer, Music Producer & Sound Designer',
