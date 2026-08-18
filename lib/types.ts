@@ -31,6 +31,9 @@ export type Project = {
   sort_order?: number;
   credits?: Record<string, string> | null;
   awards?: string[] | null;
+  score_stem_url?: string | null;
+  sound_design_stem_url?: string | null;
+  sound_lens_note?: string | null;
   created_at?: string;
 };
 
