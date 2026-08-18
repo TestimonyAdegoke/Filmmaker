@@ -28,9 +28,29 @@ export default function AdminStudio({initialProjects,initialTracks,email}:{initi
      const form=e.currentTarget; const fd=new FormData(form); const title=String(fd.get('title')||'');
      const poster=await upload(fd.get('poster') as File,'posters');
      const video=await upload(fd.get('video') as File,'video');
+     const scoreStem=await upload(fd.get('score_stem') as File,'sound-lens/score');
+     const soundStem=await upload(fd.get('sound_design_stem') as File,'sound-lens/sound-design');
      const posterUrl=poster || String(fd.get('poster_url')||'') || null;
      const videoUrl=video || String(fd.get('video_url')||'') || null;
-     const payload={title,slug:slugify(String(fd.get('slug')||title)),year:Number(fd.get('year')),type:String(fd.get('type')),roles:String(fd.get('roles')),description:String(fd.get('description')),story:String(fd.get('story')||''),poster_url:posterUrl,hero_video_url:videoUrl,trailer_url:String(fd.get('trailer_url')||'')||null,accent:String(fd.get('accent')||'#7f5b4d'),featured:fd.get('featured')==='on',published:fd.get('published')==='on',sort_order:projects.length+1};
+     const payload={
+       title,
+       slug:slugify(String(fd.get('slug')||title)),
+       year:Number(fd.get('year')),
+       type:String(fd.get('type')),
+       roles:String(fd.get('roles')),
+       description:String(fd.get('description')),
+       story:String(fd.get('story')||''),
+       poster_url:posterUrl,
+       hero_video_url:videoUrl,
+       trailer_url:String(fd.get('trailer_url')||'')||null,
+       accent:String(fd.get('accent')||'#7f5b4d'),
+       score_stem_url:scoreStem,
+       sound_design_stem_url:soundStem,
+       sound_lens_note:String(fd.get('sound_lens_note')||'')||null,
+       featured:fd.get('featured')==='on',
+       published:fd.get('published')==='on',
+       sort_order:projects.length+1
+     };
      const {data,error}=await supabase.from('projects').insert(payload).select().single(); if(error)throw error;
      setProjects(p=>[...p,data as Project]); form.reset(); setStatus('Project published successfully.'); router.refresh();
    }catch(err:any){setStatus(`Could not save project: ${err.message||err}`)}finally{setBusy(false)}
@@ -62,9 +82,16 @@ export default function AdminStudio({initialProjects,initialTracks,email}:{initi
     <section className="admin-panel"><h2>Add screen, song or ad project</h2><form className="admin-form" onSubmit={createProject}>
       <label>Project title<input name="title" required/></label><div className="admin-row"><label>Type<select name="type"><option>Film</option><option>Score</option><option>Music</option><option>Commercial</option><option>Documentary</option></select></label><label>Year<input name="year" type="number" defaultValue={new Date().getFullYear()} required/></label></div>
       <label>Your role(s)<input name="roles" placeholder="Composer · Music Producer · Sound Designer" required/></label><label>Short description<textarea name="description" rows={3} placeholder="Describe the work and your sonic contribution." required/></label><label>Story / case study<textarea name="story" rows={5} placeholder="Creative brief, approach, process, result…"/></label>
-      <div className="admin-row"><label>Poster / artwork<input name="poster" type="file" accept="image/*"/></label><label>Hero / campaign video<input name="video" type="file" accept="video/*"/></label></div><div className="admin-row"><label>Poster URL (optional)<input name="poster_url" type="url" placeholder="https://…"/></label><label>Streaming video URL<input name="video_url" type="url" placeholder="Mux / Cloudinary / CDN URL"/></label></div><label>Trailer / campaign URL<input name="trailer_url" type="url" placeholder="YouTube / Vimeo / external link"/></label><div className="admin-row"><label>Accent colour<input name="accent" type="color" defaultValue="#7f5b4d"/></label><label>Custom slug<input name="slug" placeholder="auto-generated if empty"/></label></div>
+      <div className="admin-row"><label>Poster / artwork<input name="poster" type="file" accept="image/*"/></label><label>Hero / campaign video<input name="video" type="file" accept="video/*"/></label></div><div className="admin-row"><label>Poster URL (optional)<input name="poster_url" type="url" placeholder="https://…"/></label><label>Streaming video URL<input name="video_url" type="url" placeholder="Mux / Cloudinary / CDN URL"/></label></div><label>Trailer / campaign URL<input name="trailer_url" type="url" placeholder="YouTube / Vimeo / external link"/></label>
+
+      <div className="admin-subsection"><div><span className="admin-kicker">Film only · optional</span><h3>Sound Lens</h3><p>Use the same scene as the hero video, then upload matching score and sound-design stems that start at the same timecode. The film page will let visitors isolate them.</p></div>
+        <div className="admin-row"><label>Score stem<input name="score_stem" type="file" accept="audio/*"/><small>Music only. Same duration/start point as the scene.</small></label><label>Sound design stem<input name="sound_design_stem" type="file" accept="audio/*"/><small>Designed sound only. Same duration/start point as the scene.</small></label></div>
+        <label>Sound Lens note<textarea name="sound_lens_note" rows={3} placeholder="Optional context about what the visitor should listen for…"/></label>
+      </div>
+
+      <div className="admin-row"><label>Accent colour<input name="accent" type="color" defaultValue="#7f5b4d"/></label><label>Custom slug<input name="slug" placeholder="auto-generated if empty"/></label></div>
       <div className="admin-row"><label><span>Featured on screen-work section</span><input name="featured" type="checkbox" defaultChecked/></label><label><span>Published</span><input name="published" type="checkbox" defaultChecked/></label></div><button className="admin-submit" disabled={busy}>{busy?'Uploading…':'Publish project ↗'}</button>
-    </form><div className="admin-items">{projects.map(p=><div className="admin-item" key={p.id}><div><strong>{p.title}</strong><small>{p.type} · {p.year} · {p.published?'Published':'Draft'}</small></div><button className="admin-button" onClick={()=>remove('projects',p.id)}>Delete</button></div>)}</div></section>
+    </form><div className="admin-items">{projects.map(p=><div className="admin-item" key={p.id}><div><strong>{p.title}</strong><small>{p.type} · {p.year} · {p.published?'Published':'Draft'}{p.score_stem_url||p.sound_design_stem_url?' · Sound Lens':''}</small></div><button className="admin-button" onClick={()=>remove('projects',p.id)}>Delete</button></div>)}</div></section>
     <section className="admin-panel"><h2>Add audio</h2><form className="admin-form" onSubmit={createTrack}>
       <label>Track / song title<input name="title" required/></label><div className="admin-row"><label>Genre / mood<input name="genre" placeholder="ALT R&B / SOUL" required/></label><label>Duration<input name="duration" placeholder="03:26"/></label></div>
       <label>Link to a song project<select name="project_id" defaultValue=""><option value="">Standalone score / cue</option>{musicProjects.map((p)=><option key={p.id} value={p.id}>{p.title} · {p.year}</option>)}</select><small>Create the Music project first, then link its playable master here.</small></label>
